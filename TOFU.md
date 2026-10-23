@@ -158,3 +158,16 @@ part of the fork) also passed every check:
 
 The run recorded no request to another site. The console showed only the `service-worker.js` 404
 described above. Upstream's unit tests (`npm test`) were not run, because no source file was changed.
+
+Tofu's own checks were then run on the pushed `tofu` branch, reading it the way Tofu's GitHub import does,
+with `tofu-site/` as the site root (the script is not part of the fork):
+
+- **Hosting.** A finished static site: 412 files, every one of a type Tofu's free static hosting serves.
+  Nothing in `tofu-site/` is dropped by the import.
+- **Safety check.** It reports `obfuscated-code`, "A value that was decoded is executed at runtime", on line
+  59 of `circuitjs/circuitjs-QiL9gy0I.js`. That is a false positive. Line 59 holds the simulator's own
+  formula evaluator, `Expr.eval()` in `ts/Expr.ts`, which works out the expressions typed into elements
+  such as the controlled sources; the rule reads its method calls (`t.eval(e)`) as JavaScript's `eval`,
+  and then ties the minified name `e` to an unrelated `let e=...L.unescape(...)` on line 14, which is
+  CircuitJS's own `CustomLogicModel.unescape`. The bundle never calls `eval`, `new Function` or
+  `Function`, so it is left exactly as Vite built it.
