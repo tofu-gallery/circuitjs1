@@ -8,7 +8,8 @@
 //
 // The file checks cover the entry pages, the compiled bundle and its two
 // deploy-time switches, every example circuit setuplist.txt names, the
-// licence copy, and the absence of third-party scripts and known trackers.
+// licence copy, the icon font's formats (and no .eot), and the absence of
+// third-party scripts and known trackers.
 // With a URL (a local server for tofu-site/, never a production address) it
 // also fetches every file of the site once and expects HTTP 200 with the same
 // length. It does not run the simulator; a browser does that.
@@ -79,8 +80,11 @@ check(circuits.length > 300, `setuplist.txt names only ${circuits.length} circui
 for (const name of circuits) check(exists(`circuitjs/circuits/${name}`), `example circuit ${name} is missing`)
 
 for (const rel of ['circuitjs/about.html', 'circuitjs/locale/locale_de.txt', 'circuitjs/locale/locale_zh.txt',
-  'circuitjs/images/hborder.png', 'circuitjs/font/fontello.woff2', 'circuitjs/font/LICENSE.txt', 'jsinterface.html'])
+  'circuitjs/images/hborder.png', 'circuitjs/font/fontello.woff2', 'circuitjs/font/fontello.woff',
+  'circuitjs/font/LICENSE.txt', 'jsinterface.html'])
   check(exists(rel), `${rel} is missing`)
+for (const rel of files.filter((f) => /\.eot$/i.test(f)))
+  check(false, `${rel} is an .eot font, which Tofu's free static hosting does not serve`)
 
 check(exists('COPYING.txt') && fs.readFileSync(path.join(siteDir, 'COPYING.txt')).equals(fs.readFileSync(path.join(root, 'COPYING.txt'))),
   'COPYING.txt is not a byte-identical copy of the upstream licence')

@@ -50,11 +50,17 @@ No upstream file is edited. Every change is a new file on the `tofu` branch:
    page), a byte-identical copy of `COPYING.txt`, and `THIRD-PARTY-NOTICES.txt` (below). The built
    `circuitjs.html` carries a comment at the top saying it was modified, how, when, and where its source is
    (GPL-2.0 section 2(a)).
+
+   It leaves one upstream file out of the site: **`circuitjs/font/fontello.eot`**, the icon font in Embedded
+   OpenType, a format only Internet Explorer 8 and older use. Tofu's free static hosting serves no `.eot`
+   file and turns down a whole site that has one. `circuitjs/font/fontello.css` is kept as upstream wrote it
+   and still offers the font as woff2, woff, ttf and svg; browsers take the woff2, so the icons look the same
+   and no browser asks for the `.eot`. The font's licence files stay in `circuitjs/font/`.
 2. **`tofu/verify-site.mjs`.** Checks the built site: entry pages, the bundle and both changes, every
-   example circuit `setuplist.txt` names, the licence copies, no script or stylesheet from another site and
-   no known tracker. Given a local URL it also fetches every file of the site and expects HTTP 200 with the
-   right length.
-3. **`tofu-site/`.** The verified build for this pin: 413 files, 2.6 MB.
+   example circuit `setuplist.txt` names, the licence copies, the icon font's woff2 and woff files and no
+   `.eot`, no script or stylesheet from another site and no known tracker. Given a local URL it also fetches
+   every file of the site and expects HTTP 200 with the right length.
+3. **`tofu-site/`.** The verified build for this pin: 412 files, 2.6 MB.
 4. **`TOFU.md`.** This file.
 
 To move to a newer upstream release: merge upstream into `tofu`, run `npm ci` in `ts/`, run
@@ -97,7 +103,8 @@ side panel in.
 - Upstream: <https://github.com/pfalstad/circuitjs1>, branch `master`, commit
   `778723096a46f3c5ce4e11bd9edc24324754f02c` (CircuitJS 5.0.1, version string `5.0.1ts`).
 - Fork: <https://github.com/tofu-gallery/circuitjs1>. Its `master` mirrors upstream untouched; the
-  adaptations are on `tofu`, and the gallery pins the tag `pin/2026-10-23`.
+  adaptations are on `tofu`, and the gallery pins the tag `pin/2026-10-23.1`. (The first pin,
+  `pin/2026-10-23`, still shipped `fontello.eot`, so Tofu's free static hosting turned it down.)
 - Licence: GNU General Public License, version 2 or (at your option) any later version. Copyright (C) Paul
   Falstad and Iain Sharp, with parts from OpenJDK and GNU Classpath under the GPL. `COPYING.txt` is
   unchanged, and the site carries a byte-identical copy.
@@ -107,7 +114,7 @@ side panel in.
   Apache-2.0 code can be combined with GPL version 3, which "any later version" allows.
 - Source for a deployed copy: the About box links upstream's source, and the built `circuitjs.html` names
   this fork. The exact source of this build, upstream code plus `tofu/build-site.mjs`, is this fork at
-  `pin/2026-10-23`. Keep the fork public while copies are offered.
+  `pin/2026-10-23.1`. Keep the fork public while copies are offered.
 
 ## Verification
 
@@ -115,17 +122,29 @@ Run on 2026-10-23 on macOS (arm64) with Node 22.22.3 and npm 10.9.8 (TypeScript 
 app was deployed.
 
 ```sh
-cd ts && npm ci --no-audit --no-fund && cd ..   # exit 0: 59 packages from the upstream lockfile
-node tofu/build-site.mjs                         # exit 0: tsc, then vite build; tofu-site/ 413 files, 2.6 MB
-node tofu/verify-site.mjs                        # OK: 413 files, 367 example circuits listed and present
+cd ts && npm ci --ignore-scripts --no-audit --no-fund && cd ..  # exit 0: 59 packages from the upstream lockfile
+node tofu/build-site.mjs                         # exit 0: tsc, then vite build; tofu-site/ 412 files, 2.6 MB
+node tofu/verify-site.mjs                        # OK: 412 files, 367 example circuits listed and present
 python3 -I -m http.server <port> --bind 127.0.0.1 --directory tofu-site
 curl --fail -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:<port>/               # 200
 curl --fail -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:<port>/circuitjs.html # 200
-node tofu/verify-site.mjs http://127.0.0.1:<port>  # OK: 413 URLs answered 200 with the right length
+node tofu/verify-site.mjs http://127.0.0.1:<port>  # OK: 413 URLs (412 files and /) answered 200 with the right length
 ```
 
-A headless Chromium run against the same local server (Playwright; the script is not part of the fork)
-also passed every check:
+For `pin/2026-10-23.1` the build was run again with the step that leaves out the `.eot`: it wrote exactly
+the committed files, byte for byte (the bundle is still `circuitjs-QiL9gy0I.js`), so the one change to the
+site is the missing `fontello.eot`. Served the same way, `circuitjs/font/fontello.eot` answers 404 and
+`fontello.woff2` and `fontello.woff` answer 200.
+
+A Chromium-based browser then opened the site as Tofu's GitHub import keeps it, served from 127.0.0.1:
+`/?startCircuit=ohms.txt` forwarded to `circuitjs.html?startCircuit=ohms.txt`, the simulation time
+advanced, the Ohm's law example showed 50 mA and 5 mA at 5 V, and opening the **File** menu drew its icons
+from `fontello.woff2`. No page asked for the `.eot`, and no request went to another site. The console showed
+only the `service-worker.js` 404 described above; the manifest link and the browser's own `/favicon.ico`
+request also answered 404.
+
+For the first pin, a headless Chromium run against the same local server (Playwright; the script is not
+part of the fork) also passed every check:
 
 - `/?startCircuit=ohms.txt` forwards to `circuitjs.html?startCircuit=ohms.txt`, and the simulation time
   advances.

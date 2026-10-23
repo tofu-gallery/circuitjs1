@@ -19,7 +19,9 @@
 //
 // It also adds index.html, which forwards the site root to circuitjs.html with
 // any ?query and #hash, a byte-identical copy of COPYING.txt, and
-// THIRD-PARTY-NOTICES.txt with the notices the minified bundle drops.
+// THIRD-PARTY-NOTICES.txt with the notices the minified bundle drops, and it
+// leaves out the icon font's .eot file, which Tofu's free static hosting does
+// not serve (see below).
 //
 // The source tree is never edited: the build runs on a temporary copy of ts/.
 // Run `npm ci` in ts/ first, then from the repository root:
@@ -117,6 +119,16 @@ page = replaceOnce(
   'doctype at the top of circuitjs.html',
 )
 fs.writeFileSync(pagePath, page)
+
+// Tofu's free static hosting serves no .eot (Embedded OpenType) file and turns
+// down a whole site that has one. Only Internet Explorer 8 and older need it:
+// fontello.css also offers the icon font as woff2, woff, ttf and svg, which
+// every current browser uses, so the .eot is left out and the stylesheet is
+// kept as upstream wrote it.
+const fontCss = fs.readFileSync(path.join(siteDir, 'circuitjs', 'font', 'fontello.css'), 'utf8')
+if (!fontCss.includes("format('woff2')") || !fontCss.includes("format('woff')"))
+  fail('circuitjs/font/fontello.css no longer offers the icon font as woff2 and woff. Upstream changed; update tofu/build-site.mjs.')
+fs.rmSync(path.join(siteDir, 'circuitjs', 'font', 'fontello.eot'), { force: true })
 
 fs.writeFileSync(path.join(siteDir, 'index.html'), `<!DOCTYPE html>
 <!--
