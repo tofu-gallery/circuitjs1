@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<!--
+  Added for the Tofu gallery: the site root forwards to the app's own page,
+  circuitjs.html, keeping any ?query and #hash (a shared ?ctz= circuit link,
+  for example). Upstream's GitHub Pages build adds the same kind of page.
+-->
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>CircuitJS</title>
+  <script>location.replace("circuitjs.html" + location.search + location.hash);</script>
+  <meta http-equiv="refresh" content="0; url=circuitjs.html">
+</head>
+<body>
+  <a href="circuitjs.html">CircuitJS</a>
+</body>
+</html>
