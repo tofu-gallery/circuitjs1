@@ -10,6 +10,8 @@
 // deploy-time switches, every example circuit setuplist.txt names, the
 // licence copy, the icon font's formats (and no .eot), and the absence of
 // third-party scripts and known trackers.
+// Modified for the Tofu gallery on 2026-10-24: also check that both entry pages
+// and the About box show the source of this pin.
 // With a URL (a local server for tofu-site/, never a production address) it
 // also fetches every file of the site once and expects HTTP 200 with the same
 // length. It does not run the simulator; a browser does that.
@@ -53,6 +55,14 @@ check(bundle && exists(bundle), 'circuitjs.html does not load an existing JS bun
 check(css && exists(css), 'circuitjs.html does not load an existing stylesheet')
 check(page.includes('href="circuitjs/font/fontello.css"') && exists('circuitjs/font/fontello.css'), 'icon font stylesheet is missing')
 check(page.includes('Modified for the Tofu gallery'), 'circuitjs.html lacks its modification notice')
+
+const sourceUrl = 'https://github.com/tofu-gallery/circuitjs1/tree/pin/2026-10-24'
+for (const rel of ['index.html', 'circuitjs.html']) {
+  const html = read(rel)
+  check(html.includes(`<a class="tofu-source" href="${sourceUrl}" target="_blank" rel="noopener noreferrer">Source code</a>`),
+    `${rel} lacks the visible source link for this pin`)
+}
+check(read('circuitjs/about.html').includes(`href="${sourceUrl}"`), 'About does not link this copy\'s source')
 
 if (bundle) {
   const js = read(bundle)

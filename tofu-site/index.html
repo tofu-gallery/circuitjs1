@@ -3,15 +3,36 @@
   Added for the Tofu gallery: the site root forwards to the app's own page,
   circuitjs.html, keeping any ?query and #hash (a shared ?ctz= circuit link,
   for example). Upstream's GitHub Pages build adds the same kind of page.
+  Modified for the Tofu gallery on 2026-10-24: add a visible Source
+  code link to https://github.com/tofu-gallery/circuitjs1/tree/pin/2026-10-24.
 -->
 <html>
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CircuitJS</title>
   <script>location.replace("circuitjs.html" + location.search + location.hash);</script>
   <meta http-equiv="refresh" content="0; url=circuitjs.html">
+  <style>
+    /* Tofu, 2026-10-24: keep the source link outside the controls. */
+    .tofu-source {
+      position: fixed; right: 8px; bottom: 4px; z-index: 3;
+      padding: 4px 8px; border: 1px solid #aab5c5; border-radius: 3px;
+      background: #fff; color: #163d76; font: 13px/20px Arial, sans-serif;
+      text-decoration: underline; white-space: nowrap;
+    }
+    .tofu-source:focus-visible { outline: 2px solid #163d76; outline-offset: 1px; }
+    /* Reserve the footer of the desktop sidebar, including when it scrolls. */
+    .verticalPanel { bottom: 38px !important; }
+    @media (max-width: 600px) {
+      /* The toolbar ends 128px from the right; the sidebar handle uses 20px. */
+      .tofu-source { top: 32px; right: 26px; bottom: auto; padding: 2px 6px; }
+      .verticalPanel { bottom: 0 !important; }
+    }
+  </style>
 </head>
 <body>
   <a href="circuitjs.html">CircuitJS</a>
+  <a class="tofu-source" href="https://github.com/tofu-gallery/circuitjs1/tree/pin/2026-10-24" target="_blank" rel="noopener noreferrer">Source code</a>
 </body>
 </html>

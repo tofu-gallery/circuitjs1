@@ -23,6 +23,11 @@
 // leaves out the icon font's .eot file, which Tofu's free static hosting does
 // not serve (see below).
 //
+// Modified for the Tofu gallery on 2026-10-24: the gallery requires each copy
+// to show its own source before any interaction. circuitjs.html and index.html
+// carry a visible "Source code" link to SOURCE_URL, and the About box links the
+// same pin. The links use plain HTML and CSS; the compiled bundle is not touched.
+//
 // The source tree is never edited: the build runs on a temporary copy of ts/.
 // Run `npm ci` in ts/ first, then from the repository root:
 //
@@ -34,8 +39,36 @@ import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-// The date these adaptations were last changed (GPL-2.0 section 2(a) notice).
+// The dates these adaptations were made (GPL-2.0 section 2(a) notice): CHANGED for
+// the short-link switch and the Dropbox Chooser script, SOURCE_LINK_CHANGED for
+// the "Source code" links.
 const CHANGED = '2026-10-23'
+const SOURCE_LINK_CHANGED = '2026-10-24'
+
+// The tag of this fork that names the commit holding the site this script writes.
+// A commit cannot name its own hash, so the "Source code" links name the tag. Set
+// it with every new pin, and SOURCE_LINK_CHANGED when the links change. Whoever
+// changes the code and keeps a copy online sets it to their own public source.
+const SOURCE_TAG = 'pin/2026-10-24'
+const SOURCE_URL = `https://github.com/tofu-gallery/circuitjs1/tree/${SOURCE_TAG}`
+const SOURCE_LINK = `<a class="tofu-source" href="${SOURCE_URL}" target="_blank" rel="noopener noreferrer">Source code</a>`
+const SOURCE_STYLE = `  <style>
+    /* Tofu, ${SOURCE_LINK_CHANGED}: keep the source link outside the controls. */
+    .tofu-source {
+      position: fixed; right: 8px; bottom: 4px; z-index: 3;
+      padding: 4px 8px; border: 1px solid #aab5c5; border-radius: 3px;
+      background: #fff; color: #163d76; font: 13px/20px Arial, sans-serif;
+      text-decoration: underline; white-space: nowrap;
+    }
+    .tofu-source:focus-visible { outline: 2px solid #163d76; outline-offset: 1px; }
+    /* Reserve the footer of the desktop sidebar, including when it scrolls. */
+    .verticalPanel { bottom: 38px !important; }
+    @media (max-width: 600px) {
+      /* The toolbar ends 128px from the right; the sidebar handle uses 20px. */
+      .tofu-source { top: 32px; right: 26px; bottom: auto; padding: 2px 6px; }
+      .verticalPanel { bottom: 0 !important; }
+    }
+  </style>`
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const tsDir = path.join(root, 'ts')
@@ -114,11 +147,28 @@ page = replaceOnce(
   https://github.com/tofu-gallery/circuitjs1, a fork of
   https://github.com/pfalstad/circuitjs1. CircuitJS is free software under the
   GNU General Public License, version 2 or later; see COPYING.txt.
+  Modified for the Tofu gallery on ${SOURCE_LINK_CHANGED}: visible Source code
+  links point to ${SOURCE_URL}.
 -->
 `,
   'doctype at the top of circuitjs.html',
 )
+page = replaceOnce(page, '</head>', `${SOURCE_STYLE}\n</head>`, 'head closing tag')
+page = replaceOnce(page, '</body>', `  ${SOURCE_LINK}\n</body>`, 'body closing tag')
 fs.writeFileSync(pagePath, page)
+
+// About is an ordinary HTML file, not part of the compiled bundle. Preserve
+// upstream attribution and issue-reporting links while naming this copy's source.
+const aboutPath = path.join(siteDir, 'circuitjs', 'about.html')
+let about = fs.readFileSync(aboutPath, 'utf8')
+about = replaceOnce(about, '<meta charset="UTF-8">', `<meta charset="UTF-8">
+<!-- Modified for the Tofu gallery on ${SOURCE_LINK_CHANGED}: link this copy's source pin. -->`, 'About charset declaration')
+about = replaceOnce(about,
+  '<p>GitHub link to report issues and view source code: <a href="https://github.com/pfalstad/circuitjs1" target="_blank">https://github.com/pfalstad/circuitjs1</a></p>',
+  `<p>Source code for this copy: <a href="${SOURCE_URL}" target="_blank" rel="noopener noreferrer">Source code (${SOURCE_TAG})</a></p>
+  <p>Upstream issue reports: <a href="https://github.com/pfalstad/circuitjs1" target="_blank">https://github.com/pfalstad/circuitjs1</a></p>`,
+  'About source link')
+fs.writeFileSync(aboutPath, about)
 
 // Tofu's free static hosting serves no .eot (Embedded OpenType) file and turns
 // down a whole site that has one. Only Internet Explorer 8 and older need it:
@@ -135,16 +185,21 @@ fs.writeFileSync(path.join(siteDir, 'index.html'), `<!DOCTYPE html>
   Added for the Tofu gallery: the site root forwards to the app's own page,
   circuitjs.html, keeping any ?query and #hash (a shared ?ctz= circuit link,
   for example). Upstream's GitHub Pages build adds the same kind of page.
+  Modified for the Tofu gallery on ${SOURCE_LINK_CHANGED}: add a visible Source
+  code link to ${SOURCE_URL}.
 -->
 <html>
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CircuitJS</title>
   <script>location.replace("circuitjs.html" + location.search + location.hash);</script>
   <meta http-equiv="refresh" content="0; url=circuitjs.html">
+${SOURCE_STYLE}
 </head>
 <body>
   <a href="circuitjs.html">CircuitJS</a>
+  ${SOURCE_LINK}
 </body>
 </html>
 `)

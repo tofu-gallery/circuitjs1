@@ -26,12 +26,13 @@ Do not import the repository root. It has no `index.html`; `war/` holds the lega
 their compiled code; and the plain Vite build of `ts/` writes `ts/dist`, which has no `index.html` and keeps
 the two falstad.com-only features described below.
 
-Every link inside `tofu-site/` is relative, so the site works at the host's `/`, which is how the gallery
-serves it, or under a path. The one exception is upstream's web-app manifest link (see below).
+The app's local resource links are relative, so the site works at the host's `/`, which is how the gallery
+serves it, or under a path. Upstream's web-app manifest link is an exception (see below); the source links
+and the attribution links in About open their public sites.
 
 ## What we changed, and why
 
-No upstream file is edited. Every change is a new file on the `tofu` branch:
+No file under upstream's `ts/` or `war/` is edited. Tofu's additions live on the `tofu` branch:
 
 1. **`tofu/build-site.mjs`.** Builds the TypeScript app the way upstream's own static builds do
    (`npm run build` in `ts/`, as `dist-offline.sh` and upstream's GitHub Pages workflow do), on a temporary
@@ -103,7 +104,7 @@ side panel in.
 - Upstream: <https://github.com/pfalstad/circuitjs1>, branch `master`, commit
   `778723096a46f3c5ce4e11bd9edc24324754f02c` (CircuitJS 5.0.1, version string `5.0.1ts`).
 - Fork: <https://github.com/tofu-gallery/circuitjs1>. Its `master` mirrors upstream untouched; the
-  adaptations are on `tofu`, and the gallery pins the tag `pin/2026-10-23.1`. (The first pin,
+  adaptations are on `tofu`, and this source-link pin is `pin/2026-10-24`. (The first pin,
   `pin/2026-10-23`, still shipped `fontello.eot`, so Tofu's free static hosting turned it down.)
 - Licence: GNU General Public License, version 2 or (at your option) any later version. Copyright (C) Paul
   Falstad and Iain Sharp, with parts from OpenJDK and GNU Classpath under the GPL. `COPYING.txt` is
@@ -112,11 +113,46 @@ side panel in.
   (Apache-2.0). The icon font is under the SIL Open Font License (`circuitjs/font/LICENSE.txt`). The minified
   bundle drops those notices, so `tofu/build-site.mjs` reproduces them in `tofu-site/THIRD-PARTY-NOTICES.txt`.
   Apache-2.0 code can be combined with GPL version 3, which "any later version" allows.
-- Source for a deployed copy: the About box links upstream's source, and the built `circuitjs.html` names
-  this fork. The exact source of this build, upstream code plus `tofu/build-site.mjs`, is this fork at
-  `pin/2026-10-23.1`. Keep the fork public while copies are offered.
+- Source for a deployed copy: both entry pages show **Source code**, and the About box links this
+  copy's source before the upstream issue-reporting link. The address names this fork at
+  `pin/2026-10-24`, including upstream code, `tofu/build-site.mjs` and the finished site. Keep the
+  fork and that tag public while copies are offered.
+
+## Visible source link (2026-10-24)
+
+Tofu added a plain **Source code** link to `tofu-site/index.html` and `tofu-site/circuitjs.html`.
+It is present in their HTML without signing in or opening a menu. The root still forwards to the
+simulator with its query and hash intact. Both links open
+<https://github.com/tofu-gallery/circuitjs1/tree/pin/2026-10-24>, the tag on the commit that includes
+these files. On desktop the link has its own reserved footer below the scrolling sidebar; at phone
+widths it sits in the toolbar's unused right-hand space, clear of the side-panel handle.
+
+The About box is a separate finished HTML file, so its source link now points to the same pin.
+Upstream issue-reporting and attribution links remain. Each changed HTML file carries a dated Tofu
+notice. `tofu/build-site.mjs` makes the same changes after a future source build, and
+`tofu/verify-site.mjs` checks the three source links. The compiled JavaScript and CSS are unchanged.
+
+**If you change the code and keep a copy online, point these links at your own public source for that
+version.** Update `SOURCE_URL` / `SOURCE_TAG` and the dated notice in `tofu/build-site.mjs`, the link
+expectation in `tofu/verify-site.mjs`, and the finished pages (or rebuild them). Do not keep linking
+Tofu's pin after your copy differs from it.
 
 ## Verification
+
+For `pin/2026-10-24`, the finished site was copied to a separate temporary directory and served
+with `python3 -I -m http.server`, outside this clone. `curl` read both entry pages and found the
+visible pin links. `tofu/verify-site.mjs` passed: 412 files, 367 listed example circuits and 413
+local URLs returning HTTP 200 with matching lengths. No build was run; the compiled JS and CSS
+remain byte-identical to `pin/2026-10-23.1`.
+
+Headless Chromium checked widths 320, 375, 600, 601, 768, 812, 1024 and 1280, including a 375px-high
+landscape screen. The source link was visible in every case, with no uncaught page errors or
+external requests. Desktop sidebar controls remain scrollable above the reserved source footer.
+The root preserved `?startCircuit=ohms.txt#source-check`, the simulation advanced, and File > About
+showed the same source pin. The existing service-worker 404 console messages remain as described
+below.
+
+### Earlier build and checks
 
 Run on 2026-10-23 on macOS (arm64) with Node 22.22.3 and npm 10.9.8 (TypeScript 6.0.3, Vite 8.0.14). No
 app was deployed.
