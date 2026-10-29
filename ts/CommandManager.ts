@@ -34,6 +34,7 @@ import { EditDialog } from "./EditDialog";
 import { EditOptions } from "./EditOptions";
 import { ExportAsTextDialog } from "./ExportAsTextDialog";
 import { ExportAsLocalFileDialog } from "./ExportAsLocalFileDialog";
+import { LoadFile } from "./UIManager";
 import { CommandPalette } from "./CommandPalette";
 import { ImportFromTextDialog } from "./ImportFromTextDialog";
 import { EditSubcircuitModelDialog } from "./EditSubcircuitModelDialog";
@@ -93,8 +94,10 @@ export class CommandManager {
             this.app.imageExporter?.doExportAsImage();
         if (item == "copypng") {
             this.app.imageExporter?.doImageToClipboard();
-            if (this.app.ui?.contextPanel != null)
-                this.app.ui.contextPanel.remove(); this.app.ui.contextPanel = null;
+            if (this.app.ui?.contextPanel != null) {
+                this.app.ui.contextPanel.remove();
+                this.app.ui.contextPanel = null;
+            }
         }
         if (item == "exportassvg")
             this.app.imageExporter?.doExportAsSVG();
@@ -107,8 +110,10 @@ export class CommandManager {
         if (item == "recover")
             this.app.undoManager?.doRecover();
 
-        if ((menu == "elm" || menu == "scopepop") && contextPanel != null)
-            contextPanel.remove(); this.app.ui.contextPanel = null;
+        if ((menu == "elm" || menu == "scopepop") && contextPanel != null) {
+            contextPanel.remove();
+            this.app.ui.contextPanel = null;
+        }
         if (menu == "options" && item == "shortcuts") {
             CirSim.dialogShowing = new (window as any).ShortcutsDialog(this.app);
             CirSim.dialogShowing.show();
@@ -139,7 +144,8 @@ export class CommandManager {
             this.app.mouse.menuElm = this.app.mouse.getMouseElm();
             menu = "elm";
         }
-        if (menu != "elm")
+        // keep menuElm for the floating scope menu too: it is how scopepop finds its scope
+        if (menu != "elm" && menu != "scopepop")
             this.app.mouse.menuElm = null;
 
         if (item == "cut")
@@ -257,16 +263,26 @@ export class CommandManager {
             if (sm.menuScope != -1)
                 s = sm.scopes[sm.menuScope];
             else
-                s = this.app.mouse.getMouseElm()?.elmScope;
+                // floating scope: use the element the menu was opened on.  mouseElm is cleared
+                // once the mouse leaves the canvas to reach the menu
+                s = (this.app.mouse.menuElm as any)?.elmScope;
 
             if (item == "dock") {
-                if (sm.scopeCount == sm.scopes.length)
+                const elm = this.app.mouse.menuElm as any;
+                if (sm.scopeCount == sm.scopes.length || !elm?.elmScope)
                     return;
-                sm.scopes[sm.scopeCount] = this.app.mouse.getMouseElm()?.elmScope;
-                this.app.mouse.getMouseElm()?.clearElmScope();
+                sm.scopes[sm.scopeCount] = elm.elmScope;
+                elm.clearElmScope();
                 sm.scopes[sm.scopeCount].position = sm.scopeCount;
                 sm.scopeCount++;
-                this.doDelete(false);
+                // remove the floating scope element itself.  (doDelete() would miss it, since
+                // it's not the mouse element any more, and would delete any selected elements)
+                const i = this.app.elmList.indexOf(elm);
+                if (i >= 0) {
+                    elm.delete();
+                    this.app.elmList.splice(i, 1);
+                }
+                this.app.needAnalyze();      // need to rebuild scopeElmArr
             }
             if (item == "undock") {
                 const elm = s.getElm();
@@ -322,8 +338,10 @@ export class CommandManager {
 
         // IES: Moved from itemStateChanged()
         if (menu == "main") {
-            if (contextPanel != null)
-                contextPanel.remove(); this.app.ui.contextPanel = null;
+            if (contextPanel != null) {
+                contextPanel.remove();
+                this.app.ui.contextPanel = null;
+            }
             this.app.setMouseMode(MouseManager.MODE_ADD_ELM);
             const s = item;
             if (s.length > 0)
@@ -699,7 +717,7 @@ export class CommandManager {
 
     static electronOpenFileCallback(text: string, name: string): void {
         const app = CirSim.theApp;
-        (window as any).LoadFile?.doLoadCallback(text, name);
+        LoadFile.doLoadCallback(app, text, name);
         app.allowSave(true);
     }
 
